@@ -1,63 +1,161 @@
 package com.family.rhymes;
 
 public final class GameData {
-  private GameData() {}
-  public static final class CardDef {
-    public final String word; public final int pairId;
-    public CardDef(String word, int pairId) { this.word=word; this.pairId=pairId; }
-  }
-  public static final String[][] PAIR_SPEECH = new String[][] {
-    new String[] {"конь — огонь", "рубашка — ромашка", "корова — подкова", "щенок — чеснок"},
-    new String[] {"компот — бегемот", "самокат — акробат", "ель — карамель", "клубника — черника"},
-    new String[] {"пипетка — салфетка", "глаз — алмаз", "рак — мак", "лягушка — подушка"},
-    new String[] {"машина — корзина", "сапог — пирог", "пилот — живот", "халат — салат"},
-    new String[] {"календарь — фонарь", "пшеница — синица", "букет — пакет", "водолаз — дикобраз"},
-    new String[] {"кот — рот", "кукушка — погремушка", "картина — витрина", "барсук — сундук"},
-    new String[] {"бык — язык", "канат — гранат", "олень — ремень", "удав — рукав"},
-    new String[] {"жилет — билет", "самолёт — вертолёт", "дом — сом", "булка — шкатулка"},
-    new String[] {"пружина — паутина", "петух — пастух", "зуб — дуб", "нос — пылесос"},
-    new String[] {"пень — тюлень", "шлем — крем", "рулет — табурет", "мёд — лёд"},
-    new String[] {"жук — лук", "свечка — печка", "скелет — браслет", "телефон — микрофон"},
-    new String[] {"кит — щит", "кокос — матрос", "костюм — изюм", "пробка — коробка"},
-    new String[] {"белка — тарелка", "парашют — салют", "ёж — нож", "лейка — наклейка"},
-    new String[] {"малина — балерина", "слон — балкон", "жираф — шкаф", "глобус — автобус"},
-    new String[] {"кость — трость", "вилка — копилка", "губка — юбка", "карандаш — шалаш"},
-    new String[] {"мяч — врач", "чайка — гайка", "ракета — конфета", "лимон — вагон"},
-    new String[] {"мост — хвост", "топор — мухомор", "соль — фасоль", "холодильник — будильник"},
-    new String[] {"клетка — таблетка", "меч — печь", "шар — комар", "палка — галка"},
-    new String[] {"монета — котлета", "дракон — флакон", "медведь — лебедь", "забор — помидор"},
-    new String[] {"педаль — медаль", "дневник — грузовик", "сетка — рулетка", "кирпич — кулич"},
-    new String[] {"банан — стакан", "пушка — кружка", "газета — карета", "воробей — клей"},
-    new String[] {"крот — плот", "ковёр — бобёр", "трамвай — попугай", "телёнок — цыплёнок"},
-    new String[] {"копейка — линейка", "ключ — луч", "кран — баран", "шишка — крышка"},
-    new String[] {"корона — ворона", "котёнок — утёнок", "енот — блокнот", "сарай — каравай"},
-    new String[] {"муравей — ручей", "жеребёнок — поросёнок", "индейка — канарейка", "ананас — матрас"},
-  };
-  public static final CardDef[][] LEVELS = new CardDef[][] {
-    new CardDef[] {new CardDef("ромашка", 1), new CardDef("огонь", 0), new CardDef("конь", 0), new CardDef("рубашка", 1), new CardDef("чеснок", 3), new CardDef("подкова", 2), new CardDef("корова", 2), new CardDef("щенок", 3)},
-    new CardDef[] {new CardDef("акробат", 1), new CardDef("черника", 3), new CardDef("клубника", 3), new CardDef("бегемот", 0), new CardDef("компот", 0), new CardDef("карамель", 2), new CardDef("ель", 2), new CardDef("самокат", 1)},
-    new CardDef[] {new CardDef("мак", 2), new CardDef("глаз", 1), new CardDef("лягушка", 3), new CardDef("салфетка", 0), new CardDef("пипетка", 0), new CardDef("рак", 2), new CardDef("алмаз", 1), new CardDef("подушка", 3)},
-    new CardDef[] {new CardDef("пилот", 2), new CardDef("сапог", 1), new CardDef("корзина", 0), new CardDef("халат", 3), new CardDef("пирог", 1), new CardDef("машина", 0), new CardDef("салат", 3), new CardDef("живот", 2)},
-    new CardDef[] {new CardDef("пшеница", 1), new CardDef("календарь", 0), new CardDef("букет", 2), new CardDef("дикобраз", 3), new CardDef("водолаз", 3), new CardDef("пакет", 2), new CardDef("фонарь", 0), new CardDef("синица", 1)},
-    new CardDef[] {new CardDef("кукушка", 1), new CardDef("сундук", 3), new CardDef("кот", 0), new CardDef("витрина", 2), new CardDef("картина", 2), new CardDef("погремушка", 1), new CardDef("барсук", 3), new CardDef("рот", 0)},
-    new CardDef[] {new CardDef("язык", 0), new CardDef("удав", 3), new CardDef("гранат", 1), new CardDef("бык", 0), new CardDef("ремень", 2), new CardDef("канат", 1), new CardDef("рукав", 3), new CardDef("олень", 2)},
-    new CardDef[] {new CardDef("вертолёт", 1), new CardDef("билет", 0), new CardDef("шкатулка", 3), new CardDef("сом", 2), new CardDef("дом", 2), new CardDef("самолёт", 1), new CardDef("жилет", 0), new CardDef("булка", 3)},
-    new CardDef[] {new CardDef("зуб", 2), new CardDef("паутина", 0), new CardDef("пружина", 0), new CardDef("дуб", 2), new CardDef("пылесос", 3), new CardDef("петух", 1), new CardDef("пастух", 1), new CardDef("нос", 3)},
-    new CardDef[] {new CardDef("табурет", 2), new CardDef("крем", 1), new CardDef("лёд", 3), new CardDef("тюлень", 0), new CardDef("пень", 0), new CardDef("рулет", 2), new CardDef("шлем", 1), new CardDef("мёд", 3)},
-    new CardDef[] {new CardDef("браслет", 2), new CardDef("свечка", 1), new CardDef("телефон", 3), new CardDef("скелет", 2), new CardDef("печка", 1), new CardDef("жук", 0), new CardDef("лук", 0), new CardDef("микрофон", 3)},
-    new CardDef[] {new CardDef("матрос", 1), new CardDef("пробка", 3), new CardDef("костюм", 2), new CardDef("кит", 0), new CardDef("щит", 0), new CardDef("кокос", 1), new CardDef("коробка", 3), new CardDef("изюм", 2)},
-    new CardDef[] {new CardDef("лейка", 3), new CardDef("парашют", 1), new CardDef("нож", 2), new CardDef("тарелка", 0), new CardDef("белка", 0), new CardDef("ёж", 2), new CardDef("салют", 1), new CardDef("наклейка", 3)},
-    new CardDef[] {new CardDef("жираф", 2), new CardDef("глобус", 3), new CardDef("балкон", 1), new CardDef("балерина", 0), new CardDef("автобус", 3), new CardDef("шкаф", 2), new CardDef("малина", 0), new CardDef("слон", 1)},
-    new CardDef[] {new CardDef("копилка", 1), new CardDef("кость", 0), new CardDef("карандаш", 3), new CardDef("вилка", 1), new CardDef("трость", 0), new CardDef("юбка", 2), new CardDef("губка", 2), new CardDef("шалаш", 3)},
-    new CardDef[] {new CardDef("мяч", 0), new CardDef("ракета", 2), new CardDef("вагон", 3), new CardDef("чайка", 1), new CardDef("конфета", 2), new CardDef("врач", 0), new CardDef("гайка", 1), new CardDef("лимон", 3)},
-    new CardDef[] {new CardDef("мухомор", 1), new CardDef("будильник", 3), new CardDef("соль", 2), new CardDef("мост", 0), new CardDef("хвост", 0), new CardDef("фасоль", 2), new CardDef("холодильник", 3), new CardDef("топор", 1)},
-    new CardDef[] {new CardDef("клетка", 0), new CardDef("палка", 3), new CardDef("комар", 2), new CardDef("таблетка", 0), new CardDef("печь", 1), new CardDef("шар", 2), new CardDef("галка", 3), new CardDef("меч", 1)},
-    new CardDef[] {new CardDef("котлета", 0), new CardDef("лебедь", 2), new CardDef("медведь", 2), new CardDef("помидор", 3), new CardDef("дракон", 1), new CardDef("монета", 0), new CardDef("забор", 3), new CardDef("флакон", 1)},
-    new CardDef[] {new CardDef("рулетка", 2), new CardDef("медаль", 0), new CardDef("дневник", 1), new CardDef("кирпич", 3), new CardDef("педаль", 0), new CardDef("грузовик", 1), new CardDef("кулич", 3), new CardDef("сетка", 2)},
-    new CardDef[] {new CardDef("карета", 2), new CardDef("стакан", 0), new CardDef("пушка", 1), new CardDef("воробей", 3), new CardDef("банан", 0), new CardDef("газета", 2), new CardDef("клей", 3), new CardDef("кружка", 1)},
-    new CardDef[] {new CardDef("плот", 0), new CardDef("бобёр", 1), new CardDef("ковёр", 1), new CardDef("трамвай", 2), new CardDef("телёнок", 3), new CardDef("крот", 0), new CardDef("попугай", 2), new CardDef("цыплёнок", 3)},
-    new CardDef[] {new CardDef("баран", 2), new CardDef("крышка", 3), new CardDef("луч", 1), new CardDef("копейка", 0), new CardDef("линейка", 0), new CardDef("кран", 2), new CardDef("шишка", 3), new CardDef("ключ", 1)},
-    new CardDef[] {new CardDef("корона", 0), new CardDef("котёнок", 1), new CardDef("утёнок", 1), new CardDef("ворона", 0), new CardDef("енот", 2), new CardDef("сарай", 3), new CardDef("каравай", 3), new CardDef("блокнот", 2)},
-    new CardDef[] {new CardDef("индейка", 2), new CardDef("муравей", 0), new CardDef("жеребёнок", 1), new CardDef("канарейка", 2), new CardDef("ручей", 0), new CardDef("ананас", 3), new CardDef("матрас", 3), new CardDef("поросёнок", 1)},
-  };
+    private GameData() {}
+    public static final class Pair {
+        public final String left; public final String right; public final String leftAsset; public final String rightAsset;
+        public Pair(String left, String right, String leftAsset, String rightAsset) { this.left=left; this.right=right; this.leftAsset=leftAsset; this.rightAsset=rightAsset; }
+    }
+    public static final Pair[][] LEVELS = new Pair[][] {
+        new Pair[] {
+            new Pair("конь", "огонь", "cards/card_018.jpg", "cards/card_004.jpg"),
+            new Pair("рубашка", "ромашка", "cards/card_006.jpg", "cards/card_012.jpg"),
+            new Pair("корова", "подкова", "cards/card_000.jpg", "cards/card_016.jpg"),
+            new Pair("щенок", "чеснок", "cards/card_008.jpg", "cards/card_011.jpg"),
+        },
+        new Pair[] {
+            new Pair("компот", "бегемот", "cards/card_019.jpg", "cards/card_015.jpg"),
+            new Pair("самокат", "акробат", "cards/card_002.jpg", "cards/card_010.jpg"),
+            new Pair("ель", "карамель", "cards/card_013.jpg", "cards/card_009.jpg"),
+            new Pair("клубника", "черника", "cards/card_003.jpg", "cards/card_014.jpg"),
+        },
+        new Pair[] {
+            new Pair("пипетка", "салфетка", "cards/card_017.jpg", "cards/card_005.jpg"),
+            new Pair("глаз", "алмаз", "cards/card_001.jpg", "cards/card_007.jpg"),
+            new Pair("рак", "мак", "cards/card_021.jpg", "cards/card_031.jpg"),
+            new Pair("лягушка", "подушка", "cards/card_035.jpg", "cards/card_025.jpg"),
+        },
+        new Pair[] {
+            new Pair("машина", "корзина", "cards/card_020.jpg", "cards/card_032.jpg"),
+            new Pair("сапог", "пирог", "cards/card_030.jpg", "cards/card_039.jpg"),
+            new Pair("пилот", "живот", "cards/card_028.jpg", "cards/card_033.jpg"),
+            new Pair("халат", "салат", "cards/card_037.jpg", "cards/card_023.jpg"),
+        },
+        new Pair[] {
+            new Pair("календарь", "фонарь", "cards/card_022.jpg", "cards/card_024.jpg"),
+            new Pair("пшеница", "синица", "cards/card_029.jpg", "cards/card_038.jpg"),
+            new Pair("букет", "пакет", "cards/card_034.jpg", "cards/card_027.jpg"),
+            new Pair("водолаз", "дикобраз", "cards/card_026.jpg", "cards/card_036.jpg"),
+        },
+        new Pair[] {
+            new Pair("кот", "рот", "cards/card_041.jpg", "cards/card_049.jpg"),
+            new Pair("кукушка", "погремушка", "cards/card_052.jpg", "cards/card_047.jpg"),
+            new Pair("картина", "витрина", "cards/card_040.jpg", "cards/card_054.jpg"),
+            new Pair("барсук", "сундук", "cards/card_048.jpg", "cards/card_045.jpg"),
+        },
+        new Pair[] {
+            new Pair("бык", "язык", "cards/card_055.jpg", "cards/card_059.jpg"),
+            new Pair("канат", "гранат", "cards/card_058.jpg", "cards/card_042.jpg"),
+            new Pair("олень", "ремень", "cards/card_056.jpg", "cards/card_050.jpg"),
+            new Pair("удав", "рукав", "cards/card_046.jpg", "cards/card_057.jpg"),
+        },
+        new Pair[] {
+            new Pair("жилет", "билет", "cards/card_043.jpg", "cards/card_053.jpg"),
+            new Pair("самолёт", "вертолёт", "cards/card_051.jpg", "cards/card_044.jpg"),
+            new Pair("дом", "сом", "cards/card_073.jpg", "cards/card_061.jpg"),
+            new Pair("булка", "шкатулка", "cards/card_074.jpg", "cards/card_070.jpg"),
+        },
+        new Pair[] {
+            new Pair("пружина", "паутина", "cards/card_062.jpg", "cards/card_065.jpg"),
+            new Pair("петух", "пастух", "cards/card_077.jpg", "cards/card_067.jpg"),
+            new Pair("зуб", "дуб", "cards/card_060.jpg", "cards/card_078.jpg"),
+            new Pair("нос", "пылесос", "cards/card_079.jpg", "cards/card_068.jpg"),
+        },
+        new Pair[] {
+            new Pair("пень", "тюлень", "cards/card_066.jpg", "cards/card_076.jpg"),
+            new Pair("шлем", "крем", "cards/card_072.jpg", "cards/card_075.jpg"),
+            new Pair("рулет", "табурет", "cards/card_069.jpg", "cards/card_063.jpg"),
+            new Pair("мёд", "лёд", "cards/card_064.jpg", "cards/card_071.jpg"),
+        },
+        new Pair[] {
+            new Pair("жук", "лук", "cards/card_082.jpg", "cards/card_089.jpg"),
+            new Pair("свечка", "печка", "cards/card_093.jpg", "cards/card_090.jpg"),
+            new Pair("скелет", "браслет", "cards/card_094.jpg", "cards/card_083.jpg"),
+            new Pair("телефон", "микрофон", "cards/card_091.jpg", "cards/card_080.jpg"),
+        },
+        new Pair[] {
+            new Pair("кит", "щит", "cards/card_085.jpg", "cards/card_099.jpg"),
+            new Pair("кокос", "матрос", "cards/card_096.jpg", "cards/card_088.jpg"),
+            new Pair("костюм", "изюм", "cards/card_095.jpg", "cards/card_081.jpg"),
+            new Pair("пробка", "коробка", "cards/card_097.jpg", "cards/card_087.jpg"),
+        },
+        new Pair[] {
+            new Pair("белка", "тарелка", "cards/card_086.jpg", "cards/card_098.jpg"),
+            new Pair("парашют", "салют", "cards/card_092.jpg", "cards/card_084.jpg"),
+            new Pair("ёж", "нож", "cards/card_115.jpg", "cards/card_105.jpg"),
+            new Pair("лейка", "наклейка", "cards/card_111.jpg", "cards/card_117.jpg"),
+        },
+        new Pair[] {
+            new Pair("малина", "балерина", "cards/card_104.jpg", "cards/card_108.jpg"),
+            new Pair("слон", "балкон", "cards/card_100.jpg", "cards/card_109.jpg"),
+            new Pair("жираф", "шкаф", "cards/card_106.jpg", "cards/card_112.jpg"),
+            new Pair("глобус", "автобус", "cards/card_118.jpg", "cards/card_103.jpg"),
+        },
+        new Pair[] {
+            new Pair("кость", "трость", "cards/card_102.jpg", "cards/card_110.jpg"),
+            new Pair("вилка", "копилка", "cards/card_116.jpg", "cards/card_107.jpg"),
+            new Pair("губка", "юбка", "cards/card_101.jpg", "cards/card_114.jpg"),
+            new Pair("карандаш", "шалаш", "cards/card_113.jpg", "cards/card_119.jpg"),
+        },
+        new Pair[] {
+            new Pair("мяч", "врач", "cards/card_131.jpg", "cards/card_127.jpg"),
+            new Pair("чайка", "гайка", "cards/card_123.jpg", "cards/card_128.jpg"),
+            new Pair("ракета", "конфета", "cards/card_137.jpg", "cards/card_120.jpg"),
+            new Pair("лимон", "вагон", "cards/card_122.jpg", "cards/card_134.jpg"),
+        },
+        new Pair[] {
+            new Pair("мост", "хвост", "cards/card_124.jpg", "cards/card_133.jpg"),
+            new Pair("топор", "мухомор", "cards/card_132.jpg", "cards/card_138.jpg"),
+            new Pair("соль", "фасоль", "cards/card_136.jpg", "cards/card_126.jpg"),
+            new Pair("холодильник", "будильник", "cards/card_125.jpg", "cards/card_135.jpg"),
+        },
+        new Pair[] {
+            new Pair("клетка", "таблетка", "cards/card_139.jpg", "cards/card_130.jpg"),
+            new Pair("меч", "печь", "cards/card_121.jpg", "cards/card_129.jpg"),
+            new Pair("шар", "комар", "cards/card_148.jpg", "cards/card_140.jpg"),
+            new Pair("палка", "галка", "cards/card_156.jpg", "cards/card_149.jpg"),
+        },
+        new Pair[] {
+            new Pair("монета", "котлета", "cards/card_152.jpg", "cards/card_142.jpg"),
+            new Pair("дракон", "флакон", "cards/card_155.jpg", "cards/card_145.jpg"),
+            new Pair("медведь", "лебедь", "cards/card_144.jpg", "cards/card_153.jpg"),
+            new Pair("забор", "помидор", "cards/card_158.jpg", "cards/card_146.jpg"),
+        },
+        new Pair[] {
+            new Pair("педаль", "медаль", "cards/card_159.jpg", "cards/card_143.jpg"),
+            new Pair("дневник", "грузовик", "cards/card_151.jpg", "cards/card_157.jpg"),
+            new Pair("сетка", "рулетка", "cards/card_147.jpg", "cards/card_150.jpg"),
+            new Pair("кирпич", "кулич", "cards/card_141.jpg", "cards/card_154.jpg"),
+        },
+        new Pair[] {
+            new Pair("банан", "стакан", "cards/card_160.jpg", "cards/card_175.jpg"),
+            new Pair("пушка", "кружка", "cards/card_171.jpg", "cards/card_165.jpg"),
+            new Pair("газета", "карета", "cards/card_172.jpg", "cards/card_163.jpg"),
+            new Pair("воробей", "клей", "cards/card_179.jpg", "cards/card_174.jpg"),
+        },
+        new Pair[] {
+            new Pair("крот", "плот", "cards/card_164.jpg", "cards/card_173.jpg"),
+            new Pair("ковёр", "бобёр", "cards/card_177.jpg", "cards/card_168.jpg"),
+            new Pair("трамвай", "попугай", "cards/card_162.jpg", "cards/card_169.jpg"),
+            new Pair("телёнок", "цыплёнок", "cards/card_178.jpg", "cards/card_166.jpg"),
+        },
+        new Pair[] {
+            new Pair("копейка", "линейка", "cards/card_176.jpg", "cards/card_167.jpg"),
+            new Pair("ключ", "луч", "cards/card_170.jpg", "cards/card_161.jpg"),
+            new Pair("кран", "баран", "cards/card_182.jpg", "cards/card_189.jpg"),
+            new Pair("шишка", "крышка", "cards/card_191.jpg", "cards/card_198.jpg"),
+        },
+        new Pair[] {
+            new Pair("корона", "ворона", "cards/card_192.jpg", "cards/card_180.jpg"),
+            new Pair("котёнок", "утёнок", "cards/card_184.jpg", "cards/card_188.jpg"),
+            new Pair("енот", "блокнот", "cards/card_196.jpg", "cards/card_199.jpg"),
+            new Pair("сарай", "каравай", "cards/card_195.jpg", "cards/card_185.jpg"),
+        },
+        new Pair[] {
+            new Pair("муравей", "ручей", "cards/card_183.jpg", "cards/card_190.jpg"),
+            new Pair("жеребёнок", "поросёнок", "cards/card_197.jpg", "cards/card_194.jpg"),
+            new Pair("индейка", "канарейка", "cards/card_186.jpg", "cards/card_193.jpg"),
+            new Pair("ананас", "матрас", "cards/card_187.jpg", "cards/card_181.jpg"),
+        },
+    };
 }
