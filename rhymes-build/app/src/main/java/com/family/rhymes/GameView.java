@@ -53,13 +53,18 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     private final float density;
     private final List<Card> cards = new ArrayList<>();
     private final Map<Integer, Bitmap> atlases = new HashMap<>();
+    private final RectF restartRect = new RectF();
+    private final RectF prevRect = new RectF();
+    private final RectF nextRect = new RectF();
+    private final RectF repeatRect = new RectF();
+
     private TextToSpeech tts;
     private boolean ttsReady = false;
     private int level;
     private int selected = -1;
     private boolean inputLocked = false;
     private boolean finished;
-    private final RectF restartRect = new RectF();
+    private boolean repeatPair;
 
     public GameView(Context context) {
         super(context);
@@ -68,6 +73,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         prefs = context.getSharedPreferences("rhymes_progress", Context.MODE_PRIVATE);
         level = Math.max(0, Math.min(GameData.LEVELS.length - 1, prefs.getInt("level", 0)));
         finished = prefs.getBoolean("finished", false);
+        repeatPair = prefs.getBoolean("repeat_pair", false);
         tts = new TextToSpeech(context.getApplicationContext(), this);
         if (!finished) loadLevel(level);
     }
@@ -88,12 +94,17 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         }
     }
 
+    private void stopSpeech() {
+        if (ttsReady && tts != null) tts.stop();
+    }
+
     private void loadLevel(int newLevel) {
         recycleBitmaps();
         cards.clear();
         selected = -1;
         inputLocked = false;
-        level = newLevel;
+        finished = false;
+        level = Math.max(0, Math.min(GameData.LEVELS.length - 1, newLevel));
         GameData.Pair[] pairs = GameData.LEVELS[level];
         List<Card> raw = new ArrayList<>();
         for (int i = 0; i < pairs.length; i++) {
@@ -105,6 +116,13 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         for (Card card : cards) card.bitmap = loadBitmap(card.asset);
         prefs.edit().putInt("level", level).putBoolean("finished", false).apply();
         invalidate();
+    }
+
+    private void goToLevel(int newLevel) {
+        if (newLevel < 0 || newLevel >= GameData.LEVELS.length || newLevel == level) return;
+        handler.removeCallbacksAndMessages(null);
+        stopSpeech();
+        loadLevel(newLevel);
     }
 
     private List<Card> shuffleWithoutSameRow(List<Card> raw, int levelNumber) {
@@ -174,19 +192,42 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
             return;
         }
 
-        float top = dp(18);
+        float top = dp(12);
+        float navSize = dp(52);
+        float navTop = top;
+        prevRect.set(dp(10), navTop, dp(10) + navSize, navTop + navSize);
+        nextRect.set(w - dp(10) - navSize, navTop, w - dp(10), navTop + navSize);
+        drawNavButton(canvas, prevRect, "‹", level > 0);
+        drawNavButton(canvas, nextRect, "›", level < GameData.LEVELS.length - 1);
+
         textPaint.setColor(Color.rgb(13, 91, 163));
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
-        textPaint.setTextSize(sp(26));
-        canvas.drawText("Уровень " + (level + 1) + " / " + GameData.LEVELS.length, w / 2f, top + dp(30), textPaint);
+        textPaint.setTextSize(sp(25));
+        canvas.drawText("Уровень " + (level + 1) + " / " + GameData.LEVELS.length, w / 2f, top + dp(33), textPaint);
 
         textPaint.setColor(Color.rgb(35, 35, 35));
         textPaint.setTypeface(android.graphics.Typeface.DEFAULT);
-        textPaint.setTextSize(sp(16));
-        canvas.drawText("Найди 4 пары рифм", w / 2f, top + dp(57), textPaint);
+        textPaint.setTextSize(sp(15));
+        canvas.drawText("Найди 4 пары рифм", w / 2f, top + dp(58), textPaint);
 
-        float gridTop = top + dp(72);
+        float repeatW = Math.min(w - dp(40), dp(230));
+        float repeatH = dp(36);
+        repeatRect.set(w / 2f - repeatW / 2f, top + dp(67), w / 2f + repeatW / 2f, top + dp(67) + repeatH);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(repeatPair ? Color.rgb(222, 247, 231) : Color.rgb(241, 244, 247));
+        canvas.drawRoundRect(repeatRect, dp(18), dp(18), paint);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(dp(1.5f));
+        paint.setColor(repeatPair ? Color.rgb(35, 174, 94) : Color.rgb(170, 178, 186));
+        canvas.drawRoundRect(repeatRect, dp(18), dp(18), paint);
+        paint.setStyle(Paint.Style.FILL);
+        textPaint.setColor(repeatPair ? Color.rgb(25, 130, 70) : Color.rgb(85, 92, 100));
+        textPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        textPaint.setTextSize(sp(14));
+        canvas.drawText("Повтор пары: " + (repeatPair ? "вкл" : "выкл"), repeatRect.centerX(), repeatRect.centerY() + dp(5), textPaint);
+
+        float gridTop = top + dp(112);
         float side = dp(10);
         float gap = dp(8);
         float bottom = dp(12);
@@ -202,6 +243,22 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
             card.rect.set(left, y, left + cardW, y + cardH);
             if (!card.removed) drawCard(canvas, card);
         }
+    }
+
+    private void drawNavButton(Canvas canvas, RectF rect, String symbol, boolean enabled) {
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(enabled ? Color.rgb(231, 245, 255) : Color.rgb(247, 248, 249));
+        canvas.drawRoundRect(rect, dp(14), dp(14), paint);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeWidth(dp(1.8f));
+        paint.setColor(enabled ? Color.rgb(86, 171, 229) : Color.rgb(210, 214, 218));
+        canvas.drawRoundRect(rect, dp(14), dp(14), paint);
+        paint.setStyle(Paint.Style.FILL);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        textPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        textPaint.setTextSize(sp(34));
+        textPaint.setColor(enabled ? Color.rgb(13, 91, 163) : Color.rgb(190, 194, 198));
+        canvas.drawText(symbol, rect.centerX(), rect.centerY() + dp(11), textPaint);
     }
 
     private void drawCard(Canvas canvas, Card card) {
@@ -253,15 +310,38 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         if (event.getAction() != MotionEvent.ACTION_UP) return true;
+
+        float x = event.getX();
+        float y = event.getY();
+
         if (finished) {
-            if (restartRect.contains(event.getX(), event.getY())) restartGame();
+            if (restartRect.contains(x, y)) restartGame();
             return true;
         }
+
+        if (prevRect.contains(x, y)) {
+            goToLevel(level - 1);
+            return true;
+        }
+        if (nextRect.contains(x, y)) {
+            goToLevel(level + 1);
+            return true;
+        }
+        if (repeatRect.contains(x, y)) {
+            repeatPair = !repeatPair;
+            prefs.edit().putBoolean("repeat_pair", repeatPair).apply();
+            invalidate();
+            return true;
+        }
+
         if (inputLocked) return true;
-        int hit = findCard(event.getX(), event.getY());
+        int hit = findCard(x, y);
         if (hit < 0) return true;
         Card card = cards.get(hit);
-        speak(card.word, TextToSpeech.QUEUE_FLUSH);
+
+        // Important: queue each word instead of cutting off the previous one.
+        // Rapid taps now produce complete words in order rather than fragments.
+        speak(card.word, TextToSpeech.QUEUE_ADD);
 
         if (selected < 0) {
             selected = hit;
@@ -285,8 +365,12 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
             selected = -1;
             inputLocked = true;
             invalidate();
-            GameData.Pair pair = GameData.LEVELS[level][first.pairId];
-            handler.postDelayed(() -> speak(pair.left + " — " + pair.right, TextToSpeech.QUEUE_ADD), 300);
+
+            if (repeatPair) {
+                GameData.Pair pair = GameData.LEVELS[level][first.pairId];
+                handler.postDelayed(() -> speak(pair.left + " — " + pair.right, TextToSpeech.QUEUE_ADD), 180);
+            }
+
             handler.postDelayed(() -> {
                 cards.get(firstIndex).removed = true;
                 cards.get(secondIndex).removed = true;
@@ -294,8 +378,8 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
                 cards.get(secondIndex).state = NONE;
                 inputLocked = false;
                 invalidate();
-                if (allRemoved()) handler.postDelayed(this::advanceLevel, 650);
-            }, 1050);
+                if (allRemoved()) handler.postDelayed(this::advanceLevel, 450);
+            }, 650);
         } else {
             int firstIndex = selected;
             int secondIndex = hit;
@@ -309,7 +393,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
                 if (!cards.get(secondIndex).removed) cards.get(secondIndex).state = NONE;
                 inputLocked = false;
                 invalidate();
-            }, 520);
+            }, 450);
         }
         return true;
     }
@@ -330,14 +414,16 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     private void advanceLevel() {
         if (level + 1 < GameData.LEVELS.length) {
             int next = level + 1;
-            speak("Молодец! Уровень " + (next + 1), TextToSpeech.QUEUE_FLUSH);
+            // QUEUE_ADD is deliberate: the final card's word must finish first.
+            speak("Молодец!", TextToSpeech.QUEUE_ADD);
             loadLevel(next);
         } else {
             recycleBitmaps();
             cards.clear();
             finished = true;
             prefs.edit().putBoolean("finished", true).apply();
-            speak("Молодец! Все рифмы найдены!", TextToSpeech.QUEUE_FLUSH);
+            // Also queued so it never chops off the second word of the final pair.
+            speak("Молодец! Все рифмы найдены!", TextToSpeech.QUEUE_ADD);
             invalidate();
         }
     }
@@ -367,10 +453,11 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     }
 
     private void restartGame() {
+        handler.removeCallbacksAndMessages(null);
+        stopSpeech();
         finished = false;
-        prefs.edit().clear().apply();
+        prefs.edit().putBoolean("finished", false).putInt("level", 0).apply();
         loadLevel(0);
-        speak("Уровень один", TextToSpeech.QUEUE_FLUSH);
     }
 
     private float dp(float v) { return v * density; }
