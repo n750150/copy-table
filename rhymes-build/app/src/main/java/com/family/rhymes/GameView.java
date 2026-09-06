@@ -12,11 +12,13 @@ import android.graphics.RectF;
 import android.os.Handler;
 import android.os.Looper;
 import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.view.MotionEvent;
 import android.view.View;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -53,6 +55,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     private final float density;
     private final List<Card> cards = new ArrayList<>();
     private final Map<Integer, Bitmap> atlases = new HashMap<>();
+    private final ArrayDeque<String> deferredSpeech = new ArrayDeque<>();
 
     private final RectF playRect = new RectF();
     private final RectF exitRect = new RectF();
@@ -71,6 +74,16 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     private boolean repeatPair;
     private boolean menuMode = true;
 
+    // Speech model for card taps:
+    // - same word while speaking => restart it immediately ("по-по-подушка")
+    // - different word while speaking => keep only the latest pending word
+    // - never accumulate an unlimited TTS queue from rapid taps
+    private boolean tapSpeechActive = false;
+    private String currentTapWord = null;
+    private String pendingTapWord = null;
+    private String currentTapUtteranceId = null;
+    private long tapUtteranceCounter = 0L;
+
     public GameView(Context context) {
         super(context);
         setBackgroundColor(Color.WHITE);
@@ -88,6 +101,30 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
             int result = tts.setLanguage(new Locale("ru", "RU"));
             tts.setSpeechRate(0.88f);
             tts.setPitch(1.02f);
+            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override public void onStart(String utteranceId) {}
+
+                @Override
+                public void onDone(String utteranceId) {
+                    if (utteranceId != null && utteranceId.startsWith("tap_")) {
+                        handler.post(() -> handleTapUtteranceFinished(utteranceId));
+                    }
+                }
+
+                @Override
+                public void onError(String utteranceId) {
+                    if (utteranceId != null && utteranceId.startsWith("tap_")) {
+                        handler.post(() -> handleTapUtteranceFinished(utteranceId));
+                    }
+                }
+
+                @Override
+                public void onStop(String utteranceId, boolean interrupted) {
+                    if (utteranceId != null && utteranceId.startsWith("tap_")) {
+                        handler.post(() -> handleTapUtteranceFinished(utteranceId));
+                    }
+                }
+            });
             ttsReady = result != TextToSpeech.LANG_MISSING_DATA && result != TextToSpeech.LANG_NOT_SUPPORTED;
         }
     }
@@ -96,7 +133,76 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         if (ttsReady && tts != null) tts.speak(text, queueMode, null, "rhymes_" + System.nanoTime());
     }
 
+    private void speakTappedWord(String word) {
+        if (!ttsReady || tts == null || word == null) return;
+
+        if (!tapSpeechActive || currentTapWord == null) {
+            startTapWord(word);
+            return;
+        }
+
+        if (word.equals(currentTapWord)) {
+            // Repeated tap on the same picture: restart immediately, but do not queue copies.
+            pendingTapWord = null;
+            startTapWord(word);
+        } else {
+            // Different picture: remember only the latest requested word.
+            pendingTapWord = word;
+        }
+    }
+
+    private void startTapWord(String word) {
+        if (!ttsReady || tts == null) return;
+        tapSpeechActive = true;
+        currentTapWord = word;
+        String utteranceId = "tap_" + (++tapUtteranceCounter);
+        currentTapUtteranceId = utteranceId;
+        tts.speak(word, TextToSpeech.QUEUE_FLUSH, null, utteranceId);
+    }
+
+    private void handleTapUtteranceFinished(String utteranceId) {
+        // Ignore callbacks from an older utterance that was interrupted by a restart.
+        if (currentTapUtteranceId == null || !currentTapUtteranceId.equals(utteranceId)) return;
+
+        if (pendingTapWord != null) {
+            String next = pendingTapWord;
+            pendingTapWord = null;
+            startTapWord(next);
+            return;
+        }
+
+        tapSpeechActive = false;
+        currentTapWord = null;
+        currentTapUtteranceId = null;
+        flushDeferredSpeech();
+    }
+
+    private void speakAfterTapWords(String text) {
+        if (!ttsReady || tts == null || text == null) return;
+        if (tapSpeechActive) {
+            deferredSpeech.addLast(text);
+        } else {
+            speak(text, TextToSpeech.QUEUE_ADD);
+        }
+    }
+
+    private void flushDeferredSpeech() {
+        if (!ttsReady || tts == null || deferredSpeech.isEmpty()) return;
+        while (!deferredSpeech.isEmpty()) {
+            speak(deferredSpeech.removeFirst(), TextToSpeech.QUEUE_ADD);
+        }
+    }
+
+    private void resetTapSpeechState() {
+        tapSpeechActive = false;
+        currentTapWord = null;
+        pendingTapWord = null;
+        currentTapUtteranceId = null;
+        deferredSpeech.clear();
+    }
+
     private void stopSpeech() {
+        resetTapSpeechState();
         if (ttsReady && tts != null) tts.stop();
     }
 
@@ -386,13 +492,13 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         if(inputLocked)return true;
         int hit=findCard(x,y);if(hit<0)return true;
         Card card=cards.get(hit);
-        speak(card.word,TextToSpeech.QUEUE_ADD);
+        speakTappedWord(card.word);
         if(selected<0){selected=hit;card.state=SELECTED;invalidate();return true;}
         if(selected==hit){card.state=NONE;selected=-1;invalidate();return true;}
         Card first=cards.get(selected);
         if(first.pairId==card.pairId){
             int firstIndex=selected,secondIndex=hit;first.state=CORRECT;card.state=CORRECT;selected=-1;inputLocked=true;invalidate();
-            if(repeatPair){GameData.Pair pair=GameData.LEVELS[level][first.pairId];handler.postDelayed(()->speak(pair.left+" — "+pair.right,TextToSpeech.QUEUE_ADD),180);}
+            if(repeatPair){GameData.Pair pair=GameData.LEVELS[level][first.pairId];handler.postDelayed(()->speakAfterTapWords(pair.left+" — "+pair.right),180);}
             handler.postDelayed(()->{
                 cards.get(firstIndex).removed=true;cards.get(secondIndex).removed=true;cards.get(firstIndex).state=NONE;cards.get(secondIndex).state=NONE;inputLocked=false;invalidate();
                 if(allRemoved())handler.postDelayed(this::advanceLevel,400);
@@ -410,11 +516,11 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     private void advanceLevel(){
         if(level+1<GameData.LEVELS.length){
             int next=level+1;
-            speak("Молодец!",TextToSpeech.QUEUE_ADD);
+            speakAfterTapWords("Молодец!");
             loadLevel(next);
         } else {
             recycleBitmaps();cards.clear();finished=true;prefs.edit().putBoolean("finished",true).apply();
-            speak("Молодец! Все рифмы найдены!",TextToSpeech.QUEUE_ADD);invalidate();
+            speakAfterTapWords("Молодец! Все рифмы найдены!");invalidate();
         }
     }
 
@@ -435,7 +541,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     private float sp(float v){return v*getResources().getDisplayMetrics().scaledDensity;}
 
     public void release(){
-        handler.removeCallbacksAndMessages(null);recycleBitmaps();
+        handler.removeCallbacksAndMessages(null);recycleBitmaps();resetTapSpeechState();
         if(tts!=null){tts.stop();tts.shutdown();tts=null;}
     }
 }
