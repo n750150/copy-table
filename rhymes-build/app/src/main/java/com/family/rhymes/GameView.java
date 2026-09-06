@@ -150,7 +150,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
             int col = slot % cols;
             int row = slot / cols;
             return Bitmap.createBitmap(atlas, col * tileW, row * tileH, tileW, tileH);
-        } catch (IOException | NumberFormatException | IllegalArgumentException e) {
+        } catch (IOException | IllegalArgumentException e) {
             return null;
         }
     }
