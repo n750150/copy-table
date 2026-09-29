@@ -59,6 +59,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
 
     private final RectF playRect = new RectF();
     private final RectF exitRect = new RectF();
+    private final RectF englishRect = new RectF();
     private final RectF menuRect = new RectF();
     private final RectF prevRect = new RectF();
     private final RectF nextRect = new RectF();
@@ -73,6 +74,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     private boolean finished = false;
     private boolean repeatPair;
     private boolean menuMode = true;
+    private boolean englishMode = false;
 
     // Speech model for card taps:
     // - same word while speaking => restart it immediately ("по-по-подушка")
@@ -98,7 +100,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     @Override
     public void onInit(int status) {
         if (status == TextToSpeech.SUCCESS) {
-            int result = tts.setLanguage(new Locale("ru", "RU"));
+            int result = tts.setLanguage(englishMode ? Locale.ENGLISH : new Locale("ru", "RU"));
             tts.setSpeechRate(0.88f);
             tts.setPitch(1.02f);
             tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
@@ -206,7 +208,23 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         if (ttsReady && tts != null) tts.stop();
     }
 
+    private void startEnglishGame() {
+        menuMode = false;
+        englishMode = true;
+        finished = prefs.getBoolean("finished_en", false);
+        level = Math.max(0, Math.min(EnglishGameData.LEVELS.length - 1, prefs.getInt("level_en", 0)));
+        if (ttsReady && tts != null) tts.setLanguage(Locale.ENGLISH);
+        if (finished) {
+            finished = false;
+            level = 0;
+            prefs.edit().putBoolean("finished_en", false).putInt("level_en", 0).apply();
+        }
+        loadLevel(level);
+    }
+
     private void startGame() {
+        englishMode = false;
+        if (ttsReady && tts != null) tts.setLanguage(new Locale("ru", "RU"));
         menuMode = false;
         if (finished) {
             finished = false;
@@ -233,14 +251,21 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         if (c instanceof Activity) ((Activity) c).finishAffinity();
     }
 
+    private int levelCount() { return englishMode ? EnglishGameData.LEVELS.length : GameData.LEVELS.length; }
+
+    private GameData.Pair[] currentPairs(int index) { return englishMode ? EnglishGameData.LEVELS[index] : GameData.LEVELS[index]; }
+
+    private String currentLevelKey() { return englishMode ? "level_en" : "level"; }
+    private String currentFinishedKey() { return englishMode ? "finished_en" : "finished"; }
+
     private void loadLevel(int newLevel) {
         recycleBitmaps();
         cards.clear();
         selected = -1;
         inputLocked = false;
         finished = false;
-        level = Math.max(0, Math.min(GameData.LEVELS.length - 1, newLevel));
-        GameData.Pair[] pairs = GameData.LEVELS[level];
+        level = Math.max(0, Math.min(levelCount() - 1, newLevel));
+        GameData.Pair[] pairs = currentPairs(level);
         List<Card> raw = new ArrayList<>();
         for (int i = 0; i < pairs.length; i++) {
             GameData.Pair p = pairs[i];
@@ -249,12 +274,12 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         }
         cards.addAll(shuffleWithoutSameRow(raw, level));
         for (Card card : cards) card.bitmap = loadBitmap(card.asset);
-        prefs.edit().putInt("level", level).putBoolean("finished", false).apply();
+        prefs.edit().putInt(currentLevelKey(), level).putBoolean(currentFinishedKey(), false).apply();
         invalidate();
     }
 
     private void goToLevel(int newLevel) {
-        if (newLevel < 0 || newLevel >= GameData.LEVELS.length || newLevel == level) return;
+        if (newLevel < 0 || newLevel >= levelCount() || newLevel == level) return;
         handler.removeCallbacksAndMessages(null);
         stopSpeech();
         loadLevel(newLevel);
@@ -349,14 +374,16 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         textPaint.setTypeface(android.graphics.Typeface.DEFAULT);
         textPaint.setColor(Color.rgb(65, 75, 85));
         textPaint.setTextSize(sp(18));
-        String sub = finished ? "Все уровни пройдены" : "Продолжить с уровня " + (level + 1);
+        String sub = finished ? (englishMode ? "All levels completed" : "Все уровни пройдены") : (englishMode ? "Continue from level " + (level + 1) : "Продолжить с уровня " + (level + 1));
         canvas.drawText(sub, w / 2f, h * 0.31f, textPaint);
 
         float bw = Math.min(w * 0.72f, dp(320));
         float bh = dp(68);
         playRect.set(w/2f-bw/2f, h*0.43f, w/2f+bw/2f, h*0.43f+bh);
-        exitRect.set(w/2f-bw/2f, h*0.56f, w/2f+bw/2f, h*0.56f+bh);
+        englishRect.set(w/2f-bw/2f, h*0.56f, w/2f+bw/2f, h*0.56f+bh);
+        exitRect.set(w/2f-bw/2f, h*0.69f, w/2f+bw/2f, h*0.69f+bh);
         drawBigButton(canvas, playRect, finished ? "Играть сначала" : "Играть", Color.rgb(35,174,94));
+        drawBigButton(canvas, englishRect, "English", Color.rgb(55,135,210));
         drawBigButton(canvas, exitRect, "Выход", Color.rgb(90,108,125));
     }
 
@@ -377,20 +404,20 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         prevRect.set(dp(10), top, dp(10)+navSize, top+navSize);
         nextRect.set(w-dp(10)-navSize, top, w-dp(10), top+navSize);
         drawNavButton(canvas, prevRect, "‹", level > 0);
-        drawNavButton(canvas, nextRect, "›", level < GameData.LEVELS.length - 1);
+        drawNavButton(canvas, nextRect, "›", level < levelCount() - 1);
 
         textPaint.setTextAlign(Paint.Align.CENTER);
         textPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         textPaint.setColor(Color.rgb(13,91,163));
         textPaint.setTextSize(sp(24));
-        canvas.drawText("Уровень " + (level+1) + " / " + GameData.LEVELS.length, w/2f, top+dp(31), textPaint);
+        canvas.drawText(englishMode ? "Level " + (level+1) + " / " + levelCount() : "Уровень " + (level+1) + " / " + levelCount(), w/2f, top+dp(31), textPaint);
 
         float controlTop = top + dp(56);
         float menuW = dp(104), controlH = dp(36), gap = dp(8);
         float repeatW = Math.min(dp(190), w - dp(40) - menuW - gap);
         menuRect.set(dp(12), controlTop, dp(12)+menuW, controlTop+controlH);
         repeatRect.set(w-dp(12)-repeatW, controlTop, w-dp(12), controlTop+controlH);
-        drawSmallButton(canvas, menuRect, "← Меню", false);
+        drawSmallButton(canvas, menuRect, englishMode ? "← Menu" : "← Меню", false);
         drawSmallButton(canvas, repeatRect, "Повтор пары: " + (repeatPair ? "вкл" : "выкл"), repeatPair);
 
         float gridTop = controlTop + controlH + dp(9);
@@ -478,6 +505,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         float x=event.getX(), y=event.getY();
         if(menuMode){
             if(playRect.contains(x,y)) startGame();
+            else if(englishRect.contains(x,y)) startEnglishGame();
             else if(exitRect.contains(x,y)) exitApp();
             return true;
         }
@@ -498,7 +526,7 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         Card first=cards.get(selected);
         if(first.pairId==card.pairId){
             int firstIndex=selected,secondIndex=hit;first.state=CORRECT;card.state=CORRECT;selected=-1;inputLocked=true;invalidate();
-            if(repeatPair){GameData.Pair pair=GameData.LEVELS[level][first.pairId];handler.postDelayed(()->speakAfterTapWords(pair.left+" — "+pair.right),180);}
+            if(repeatPair){GameData.Pair pair=currentPairs(level)[first.pairId];handler.postDelayed(()->speakAfterTapWords(pair.left+" — "+pair.right),180);}
             handler.postDelayed(()->{
                 cards.get(firstIndex).removed=true;cards.get(secondIndex).removed=true;cards.get(firstIndex).state=NONE;cards.get(secondIndex).state=NONE;inputLocked=false;invalidate();
                 if(allRemoved())handler.postDelayed(this::advanceLevel,400);
@@ -514,13 +542,13 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
     private boolean allRemoved(){for(Card c:cards)if(!c.removed)return false;return true;}
 
     private void advanceLevel(){
-        if(level+1<GameData.LEVELS.length){
+        if(level+1<levelCount()){
             int next=level+1;
-            speakAfterTapWords("Молодец!");
+            speakAfterTapWords(englishMode ? "Good job!" : "Молодец!");
             loadLevel(next);
         } else {
-            recycleBitmaps();cards.clear();finished=true;prefs.edit().putBoolean("finished",true).apply();
-            speakAfterTapWords("Молодец! Все рифмы найдены!");invalidate();
+            recycleBitmaps();cards.clear();finished=true;prefs.edit().putBoolean(currentFinishedKey(),true).apply();
+            speakAfterTapWords(englishMode ? "Good job! All rhymes found!" : "Молодец! Все рифмы найдены!");invalidate();
         }
     }
 
@@ -529,12 +557,12 @@ public class GameView extends View implements TextToSpeech.OnInitListener {
         textPaint.setTextAlign(Paint.Align.CENTER);textPaint.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);textPaint.setColor(Color.rgb(13,91,163));textPaint.setTextSize(sp(38));
         canvas.drawText("Молодец!",w/2f,h*0.32f,textPaint);
         textPaint.setTypeface(android.graphics.Typeface.DEFAULT);textPaint.setColor(Color.rgb(40,40,40));textPaint.setTextSize(sp(21));
-        canvas.drawText("Все 25 уровней пройдены",w/2f,h*0.39f,textPaint);
+        canvas.drawText(englishMode ? "All 8 levels completed" : "Все 25 уровней пройдены",w/2f,h*0.39f,textPaint);
         float bw=Math.min(w*0.72f,dp(320)),bh=dp(64);
         restartRect.set(w/2f-bw/2f,h*0.50f,w/2f+bw/2f,h*0.50f+bh);
         menuRect.set(w/2f-bw/2f,h*0.62f,w/2f+bw/2f,h*0.62f+bh);
-        drawBigButton(canvas,restartRect,"Играть снова",Color.rgb(35,174,94));
-        drawBigButton(canvas,menuRect,"Меню",Color.rgb(90,108,125));
+        drawBigButton(canvas,restartRect,englishMode ? "Play again" : "Играть снова",Color.rgb(35,174,94));
+        drawBigButton(canvas,menuRect,englishMode ? "Menu" : "Меню",Color.rgb(90,108,125));
     }
 
     private float dp(float v){return v*density;}
